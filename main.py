@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Path, Query
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -12,8 +12,8 @@ class Movie(BaseModel):
     title: str = Field(min_Length=5,max_Length=15)
     overview: str = Field(min_Length=15, max_Length=50)
     year: int = Field(le=2022)
-    rating: float
-    category: str
+    rating: float = Field(ge=1, le=10)
+    category: str = Field(min_Length=5, max_Length=15)
 
     class Config:
         schema_extra = {
@@ -56,18 +56,15 @@ def get_movies():
     return movies
 
 @app.get('/movies/{id}', tags=['Movies'])
-def get_movie(id: int):
+def get_movie(id: int = Path(ge=1, le=2000)):
     for item in movies:
         if item['id'] == id:
             return item
     return []
 
 @app.get('/movies/', tags=['Movies'])
-def get_movies_by_category(category: str, year: int):
-    for item in movies:
-        if item['category'] == category and item['year'] == year:
-            return item
-    return []
+def get_movies_by_category(category: str = Query(min_Length=5, max_Length=15)):
+    return [item for item in movies if item['category'] == category]
 
 @app.post('/movies', tags=['Movies'])
 def create_movies(movie: Movie):
